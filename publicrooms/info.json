@@ -1,0 +1,18 @@
+{
+    "author": [
+        "Obi-Wan3"
+    ],
+    "description": "Public VCs that are created automatically, with customizable channel naming templates and support for multiple systems.",
+    "disabled" : false,
+    "end_user_data_statement" : "This cog stores provided server settings, as well as information about the active VCs (and their creators) created through this cog, identified by Discord IDs.",
+    "hidden": false,
+    "install_msg": "Thank you for installing! Use `[p]help publicrooms` for more info.",
+    "min_bot_version" : "3.4.0",
+    "min_python_version" : [3, 8, 1],
+    "permissions" : ["manage_channels"],
+    "required_cogs" : {},
+    "requirements" : [],
+    "short": "Automatic Public VC Creation",
+    "tags" : ["utility", "publicrooms", "voice channels", "automatic", "creation", "templates"],
+    "type": "COG"
+}

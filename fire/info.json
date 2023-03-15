@@ -1,0 +1,16 @@
+{
+  "author": [
+    "jay_"
+  ],
+  "min_bot_version": "0.0.1",
+  "description": "Makes fire letters",
+  "hidden": false,
+  "install_msg": "FIRE",
+  "short": "Fire",
+  "end_user_data_statement": "This cog does not store any End User Data",
+  "tags": [
+    "jay",
+    "utils",
+    "tools"
+  ]
+}

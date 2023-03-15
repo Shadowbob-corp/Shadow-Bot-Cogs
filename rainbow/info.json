@@ -1,0 +1,15 @@
+{
+    "author": [
+        "Jay_"
+    ],
+    "install_msg": "Make as many roles as you want and add the IDs to the rainbow.py file in the self.roles section",
+    "name": "rainbow",
+    "short": "rainbow",
+    "description": "Change colors with roles, setup the roles propperly",
+    "tags": [
+        "rainbow",
+        "gay"
+    ],
+    "type": "COG",
+    "end_user_data_statement": "This cog does not store any end user data."
+}

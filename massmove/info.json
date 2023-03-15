@@ -1,0 +1,11 @@
+{
+    "author": [
+      "Kowlin"
+    ],
+    "description": "Massmove members out of voice channels.",
+    "end_user_data_statement": "This cog stores no personal data.",
+    "short": "Massmove members out of voice channels.",
+    "tags": ["moderation","massmove","voice","voicemoderation"],
+    "type": "COG",
+    "install_msg": "Thanks for installing massmove, Don't forget that ``[P]help Massmove`` is your friend!"
+  }
