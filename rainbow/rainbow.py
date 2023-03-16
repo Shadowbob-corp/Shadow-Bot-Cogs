@@ -19,7 +19,7 @@ class Rainbow(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.individuals = {}
-        self.color_interval = 5000
+        self.color_interval = 50
         self.color_list = {}
         self.patterns = {'catlady': {'pattern':[],
                                     'users':[]},
@@ -79,7 +79,7 @@ class Rainbow(commands.Cog):
             names = ctx.guild.get_member(int(uid))
             
             colour = int('000000', 16)
-            role = await ctx.guild.create_role(name=names.name, )
+            role = await ctx.guild.create_role(name=names.name)
             await role.edit(color=discord.Colour(colour))
             position = {role: self.get_position(ctx)}
             await ctx.guild.edit_role_positions(positions = position)
@@ -149,7 +149,7 @@ class Rainbow(commands.Cog):
                     color -= 16777215
                 print('color ' + str(color))
                 await role.edit(colour=discord.Colour(color))
-            else:
+            '''   else:
                 if not self.is_rainbow(uid):           
                     self.iandividuals.update({uid:'FFFFFF'})
                     names = message.guild.get_member(int(uid))
@@ -166,7 +166,7 @@ class Rainbow(commands.Cog):
                     nval = int(str(nval), 16)
                     print(nval)                
                     nval += self.color_interval
-                    self.individuals.update({str(uid): nval})
+                    self.individuals.update({str(uid): nval})'''
 
             
 

@@ -33,7 +33,7 @@ class Awo(commands.Cog):
         self.channel = None #channel object so I can access it for functions later
         self.member_dict = {}#{716806759687258133: {'link': 'https://www.permaculturewomen.com/wp-content/uploads/2020/11/image-107.jpeg', 'history': []}} #initialize it with 1 to prevent errors and so I dont have to keep adding myself to test
         self.picind = 0
-        self.lock = asyncio.Lock()
+
 
 
         #awo high score and betting vars
@@ -48,7 +48,7 @@ class Awo(commands.Cog):
         self.bet_payout = {}
         self.main = None
         self.gamble = False      
-        
+        self.lock = asyncio.Lock()
         self.nums = {'0':'<a:0_:1044940344833347584>',
             '1':'<a:1_:1044940347014397974>',
             '2':'<a:2_:1044940349077991434>',
@@ -69,7 +69,7 @@ class Awo(commands.Cog):
         if self.piclist is None:
             
             self.piclist = ['https://s.abcnews.com/images/Technology/GTY_howling_wolf_tk_130829_16x9_992.jpg', 'https://media.tenor.com/32biYrZHe74AAAAC/wolf-howl.gif']
-     
+        self.alive = await self.config.alive()
         #print(self.piclist)
         self.high_Streak = await self.config.hiscore()
         await self.config.runner.set(0)
@@ -77,18 +77,14 @@ class Awo(commands.Cog):
             self.high_Streak = 0
         its = await self.config.all_members()
         ind = 0
-        orderlist = []
-     
+        orderlist = []     
         #print(len(orderlist))
         for gid, data in its.items():
-            #print(data)
-          
+            #print(data)          
             #print(ind, orderlist)
-            for link, history in data.items():
-               
+            for link, history in data.items():               
                 #print('link  ---------- ' + str(history['link']))
                 #print('hist ' + str(history['history']))
-
                 self.member_dict.update({link:{'link':history['link'], 'history': history['history']}})
                 #print(self.member_dict)
             
@@ -180,7 +176,7 @@ class Awo(commands.Cog):
                     self.reset = False
                     return
                 num = random.randrange(1000,3000)
-                #print('num = ' + str(num))
+                print('num = ' + str(num))
                 if i == 0:
                     self.payout_list.update({list(self.payout_list.keys())[i]: num})
                     self.betlist.update({list(self.payout_list.keys())[i]: num})
@@ -190,7 +186,7 @@ class Awo(commands.Cog):
                 else:                   
                     for j in range(i+1):
                         t_num = self.payout_list[list(self.payout_list.keys())[j]] + num
-                        #print('t_num' + str(t_num))
+                        print('t_num' + str(t_num))
                         self.payout_list.update({list(self.payout_list.keys())[j]: t_num})   
                         self.betlist.update({list(self.payout_list.keys())[j]: t_num})        
                         print(self.payout_list)
@@ -205,17 +201,13 @@ class Awo(commands.Cog):
                 print(self.member_dict[f]['history'])    
                 if self.member_dict[f]['history'] is not None and self.member_dict[f]['history'] != "":
                     print(self.member_dict[f]['history'])
-                    time = self.member_dict[f]['history']
-                
-                
+                    time = self.member_dict[f]['history']                
                     print('history is ' + str(time))
                 else:
                     time = datetime.datetime.now() - datetime.timedelta(hours=1, seconds=1)
                     self.member_dict[f]['history'] = time
-                    print('no history ---------- ' + str(time))
-                    
-                if datetime.datetime.now() - self.translate_history(time) < datetime.timedelta(hours=1):
-                        
+                    print('no history ---------- ' + str(time))                    
+                if datetime.datetime.now() - self.translate_history(time) < datetime.timedelta(hours=1):                        
                     dont_pay.append(f)
                     print(dont_pay)
                     continue
@@ -258,6 +250,7 @@ class Awo(commands.Cog):
             self.runner = None
             self.main = None
             self.alive = 0
+            await self.config.alive.set(0)
 
         else:
             await ctx.send(f'{ctx.author.mention} is a lone wolf right now :\'(')
@@ -269,6 +262,7 @@ class Awo(commands.Cog):
             self.runner = None
             self.main = None
             self.alive = 0
+            await self.config.alive.set(0)
         
 
     @commands.command()
@@ -276,33 +270,27 @@ class Awo(commands.Cog):
         if not self.gamble:
             return
         if not ctx.author.bot:
-            
-
             amt = self.payout_list[ctx.author.id]
             rand = random.random()
             cutoff = 100/multiplier
             if rand * 100 <= cutoff:    
-                
                 self.payout_list.update({ctx.author.id: amt * multiplier})
                 self.betlist.update({ctx.author.id: amt * multiplier})
-
                 await ctx.send(f'{ctx.author.mention} won a whopping {str(amt * multiplier)} {self.currency}')
                 self.last_num = 0
-
             else:
                 self.payout_list.update({ctx.author.id: 0})
                 self.betlist.update({ctx.author.id: 0})
                 await ctx.send(f'{ctx.author.mention} lost it all, sorry yo.')
         
-    #helper function.  If you want to search the cur_streak then leave lst empty. If you want to searh then member dictionary or any other dictionary, put that in lst
-    
-    
-
 
     @commands.command()
     @commands.cooldown(1, 27, commands.BucketType.member)
     async def awo(self, ctx: commands.Context):
         sis_owner = await self.bot.is_owner(ctx.author)
+        runn = await self.config.alive()
+        if runn == 0 and self.alive == 0:
+            return
         '''  if not sis_owner:
             await ctx.send('I\'m in timeout because I was a bad boy.')
             return'''
@@ -323,8 +311,7 @@ class Awo(commands.Cog):
                 await mem.add_roles(ctx.guild.get_role(1048830223107506258), reason=f"Welcome to Wolf Pack. >awo")
                 await ctx.send(f'{ctx.author.mention} welcome to Wolf Pack. {ctx.prefix}awo')  
                 return         
-        member = ctx.author
-  
+        member = ctx.author  
         if self.payout_list is None:
             self.payout_list[member.id] = 0
         run = await self.config.runner()
@@ -332,10 +319,8 @@ class Awo(commands.Cog):
             await self.config.runner.set(member.id)
         if self.alive == 0:
             self.alive = ctx.author.id    
-            
-        
-
-              
+            await self.config.alive.set(ctx.author.id)
+  
         ##print('in_list1 ' + str(self.member_dict))
             #this is a url
         if member.id in list(self.member_dict.keys()):
@@ -346,13 +331,7 @@ class Awo(commands.Cog):
         else:
             self.member_dict[member.id] = {'link': "", 'history': None}
             user_pic =self.piclist[self.picind % len(self.piclist)]
-            self.picind += 1                                        #they will have to have the wolfpack role to have an entry in self.member_dict
-            
-
-      
-        
-             
-           
+            self.picind += 1                                        #they will have to have the wolfpack role to have an entry in self.member_dict    
         numm = len(self.payout_list) + 1
         ##print(numm)                          
         num = "0"
@@ -370,36 +349,24 @@ class Awo(commands.Cog):
             await ctx.send(user_pic)
             await ctx.send(f'AWOOOOOOOOOoooooOOOOOOOOOOOOOOOOOOO ' + str(int(num)))  
             return
-        
-            
-
-        
         #for when I call cmduser
         alive = await self.config.alive()
         runner = await self.config.runner()
         ##print(alive)
         if alive is None or alive == 0:
             alive = member.id
-
         while(self.alive != 0 ):
-            ##print('self.alive ' + str(self.alive))
-            
+            ##print('self.alive ' + str(self.alive))            
             if member.id == runner:
                 ##print('member.is = runner ' + str(runner))
                 while(alive != 0):
-
                     if member.id == alive:
                         ##print(str(datetime.datetime.now() - self.streak_start))
-                        if datetime.datetime.now() - self.streak_start > datetime.timedelta(seconds =30):  
-                        
+                        if datetime.datetime.now() - self.streak_start > datetime.timedelta(seconds =30):                        
                             await ctx.send('The awo streak has ended. :wolf:')
-                            
-
                             if self.high_Streak < len(list(self.payout_list.keys())):
                                 self.high_Streak = len(list(self.payout_list.keys()))
-
                                 await self.config.entries.hiscore.set(self.high_Streak)                           
-
                                 await ctx.send(f':wolf: NEW HIGH SCORE {str(self.high_Streak)} :wolf:')
                             self.alive = 0
                             await self.config.alive.set(0)
@@ -407,11 +374,8 @@ class Awo(commands.Cog):
                             await self.payout(ctx)                            
                             break    
                         await asyncio.sleep(1)
-
                     else:
-                        return                 
-                    
-                
+                        return               
                 await asyncio.sleep(1)
             else:
                 return
@@ -438,7 +402,8 @@ class Awo(commands.Cog):
         self.streak_start = None
 
         self.main = None
-        self.alive = False
+        self.alive = 0
+        await self.config.alive.set(0)
 
     @commands.command()
     @checks.is_owner()
@@ -507,8 +472,7 @@ class Awo(commands.Cog):
                         
                 else:
                     await ctx.send("You are a broke ass mfer, you can\'t afford it.")
-            else:
-                
+            else:                
                 b = await bank.get_balance(ctx.author)
                 print(ctx.author.name + ' ' + str(b))
                 if b >= payamt:                                                   
@@ -522,8 +486,7 @@ class Awo(commands.Cog):
                     self.listen_for.append(ctx.author.id)
                 
         else:
-            b = await bank.get_balance(ctx.author)
-            
+            b = await bank.get_balance(ctx.author)            
             if b >= payamt:      #payamt should be 40000 if they have a previous picture                           
                 await bank.set_balance(ctx.author,b - (payamt))
                 if ctx.author.id in list(self.member_dict.keys()): 
@@ -535,7 +498,6 @@ class Awo(commands.Cog):
                 self.listen_for.append(ctx.author.id)                        
             else:
                 await ctx.send("You are a broke ass mfer, you can\'t afford it.")
-        
 
     def time_from_awo(self):
         if len(list(self.payout_list.keys())) == 0 and self.streak_start == None:
@@ -553,12 +515,9 @@ class Awo(commands.Cog):
         ctx = self.channel
         added = False
         url = ""
-        history = ""
-       
-        if len(self.listen_for) > 0 and not message.author.bot:
-            
-            if self.time_from_awo() < datetime.timedelta(seconds = 60):
-              
+        history = ""       
+        if len(self.listen_for) > 0 and not message.author.bot:            
+            if self.time_from_awo() < datetime.timedelta(seconds = 60):              
                 url = ""
                 if message.author.id in self.listen_for:
                     
@@ -595,9 +554,7 @@ class Awo(commands.Cog):
                         
                        # print('pic' + str(message.attachments))                
                         url = str(message.content)
-                        self.member_dict.update({message.author.id: {'link':url, 'history': history}})
-                                
-                       
+                        self.member_dict.update({message.author.id: {'link':url, 'history': history}})                      
                         self.listen_for.remove(message.author.id)
                         added = True
                         if added:
