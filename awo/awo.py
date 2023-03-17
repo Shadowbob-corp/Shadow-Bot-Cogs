@@ -85,7 +85,10 @@ class Awo(commands.Cog):
             for link, history in data.items():               
                 #print('link  ---------- ' + str(history['link']))
                 #print('hist ' + str(history['history']))
-                self.member_dict.update({link:{'link':history['link'], 'history': history['history']}})
+
+                print(history['entries'])
+                print(history['history'])
+                self.member_dict.update({link:{'link':history['entries']['link'], 'history': history['history']}})
                 #print(self.member_dict)
             
     @commands.command()
@@ -163,60 +166,69 @@ class Awo(commands.Cog):
         hour = temp[0]
         minute = temp[1]
         second = temp[2].split('.')[0]
+        print('-------------------' + str(datetime.datetime(int(year),int(month),int(day),int(hour),int(minute),int(second))))
         return datetime.datetime(int(year),int(month),int(day),int(hour),int(minute),int(second))
 
 
     async def payout(self, ctx):
+
         msg = []
         dont_pay = []
-        await self.lock.acquire()
-        if len(list(self.payout_list.keys())) > 1: ###################change >= to > when done debug
-            for i in range(len(list(self.payout_list.keys()))):
+
+        print('lalal')
+        print(self.payout_list)
+        
+        if len(list(self.payout_list.keys())) > 1:
+            ###################change >= to > when done debug
+            for i in list(self.payout_list.keys()):
                 if self.reset:
+                    print('reset')
                     self.reset = False
                     return
                 num = random.randrange(1000,3000)
-                print('num = ' + str(num))
-                if i == 0:
-                    self.payout_list.update({list(self.payout_list.keys())[i]: num})
-                    self.betlist.update({list(self.payout_list.keys())[i]: num})
-                    print(self.payout_list)
-                    print(self.betlist)
-                    print(num)
-                else:                   
-                    for j in range(i+1):
-                        t_num = self.payout_list[list(self.payout_list.keys())[j]] + num
-                        print('t_num' + str(t_num))
-                        self.payout_list.update({list(self.payout_list.keys())[j]: t_num})   
-                        self.betlist.update({list(self.payout_list.keys())[j]: t_num})        
-                        print(self.payout_list)
-                        print(self.betlist)
-                        print(t_num)     
-            self.currency = await bank.get_currency_name(ctx.guild)
-            time = None
-            for f in list(self.payout_list.keys()):
-                if self.reset:
-                    self.reset = False
-                    return
-                print(self.member_dict[f]['history'])    
-                if self.member_dict[f]['history'] is not None and self.member_dict[f]['history'] != "":
-                    print(self.member_dict[f]['history'])
-                    time = self.member_dict[f]['history']                
-                    print('history is ' + str(time))
-                else:
-                    time = datetime.datetime.now() - datetime.timedelta(hours=1, seconds=1)
-                    self.member_dict[f]['history'] = time
-                    print('no history ---------- ' + str(time))                    
-                if datetime.datetime.now() - self.translate_history(time) < datetime.timedelta(hours=1):                        
-                    dont_pay.append(f)
-                    print(dont_pay)
-                    continue
-                else:    
-                    tem = self.translate_history(self.member_dict[f]['history'])
+                print('num = ' + str(num))            
+                             
+                 
+                self.currency = await bank.get_currency_name(ctx.guild)
+                time = None
+          
+
+                if self.member_dict[i]['history'] is not None and self.member_dict[i]['history'] != "":
+                    time = self.member_dict[i]['history']  
+                    if datetime.datetime.now() - self.translate_history(time) < datetime.timedelta(hours=1):    
+                        print('dont pay - ' + str(datetime.datetime.now() - self.translate_history(time)))                    
+                        dont_pay.append(i)
+                        print(dont_pay)
+                        continue
+                    else:
+                        print('history VVVVVVVVVV '+str(self.member_dict[i]['history']))
+                        self.betlist[i] = num
+                                    
+                        print('history is ' + str(datetime.datetime.now() - self.translate_history(time) ))
+                        time = datetime.datetime.now()
+                        self.member_dict[i]['history'] = time
+                        self.betlist[i] = num
+                        await self.config.member(ctx.guild.get_member(i)).history.set(str(time))
+                        print('no history ---------- ' + str(time)) 
+                    
+                     
+            updated = {}
+            ind = 0
+            lst = list(self.betlist.keys())
+            for b in range(len(lst) - 1):
+                print('b' + str(b))
+                if b == len(lst) - 1:
+                    self.betlist[lst[b]] += self.betlist[lst[b+1]]
+                    break
+                for d in range(b+1,len(lst)):
+                    str('d ' + str(d))
+                    self.betlist[lst[b]] += self.betlist[lst[d]]
+            print(self.betlist)
+
                         
-                    print('tem ' + str(tem))
-                    await self.config.history.set(str(tem))
-                    continue
+                
+                
+                
                 
                     
                
@@ -227,7 +239,7 @@ class Awo(commands.Cog):
             await asyncio.sleep(30)            
             for m in list(self.payout_list.keys()):
                 if m in dont_pay:
-                    msg.append(str(ctx.guild.get_member(f).mention) + ' can get paid again at ' + str(time + datetime.timedelta(hours=1)) + '.\n')
+                    msg.append(str(ctx.guild.get_member(m).mention) + ' can get paid again at ' + str(self.translate_history( time )+ datetime.timedelta(hours=1)) + '.\n')
                     continue
                 else:
                     print(f'{ctx.guild.get_member(m).mention} got {str(self.betlist[m])} {self.currency}\n')
@@ -244,6 +256,7 @@ class Awo(commands.Cog):
                 print(self.payout_list)
             self.gamble = False
             self.payout_list = {}
+            self.betlist = {}
             await self.config.awo.clear()
             self.last_num = 0
             self.streak_start = None
@@ -256,6 +269,7 @@ class Awo(commands.Cog):
             await ctx.send(f'{ctx.author.mention} is a lone wolf right now :\'(')
             self.gamble = False
             self.payout_list = {}
+            self.betlist = {}
             await self.config.awo.clear()
             self.last_num = 0
             self.streak_start = None
@@ -263,6 +277,7 @@ class Awo(commands.Cog):
             self.main = None
             self.alive = 0
             await self.config.alive.set(0)
+        
         
 
     @commands.command()
@@ -285,15 +300,12 @@ class Awo(commands.Cog):
         
 
     @commands.command()
-    @commands.cooldown(1, 27, commands.BucketType.member)
+    #@commands.cooldown(1, 27, commands.BucketType.member)
     async def awo(self, ctx: commands.Context):
         sis_owner = await self.bot.is_owner(ctx.author)
         runn = await self.config.alive()
-        if runn == 0 and self.alive == 0:
-            return
-        '''  if not sis_owner:
-            await ctx.send('I\'m in timeout because I was a bad boy.')
-            return'''
+        #print(runn)
+
         wolfp = ctx.guild.get_role(1048830223107506258)
         user_pic = self.piclist[self.picind % len(self.piclist)]
         if wolfp is None:
@@ -301,7 +313,7 @@ class Awo(commands.Cog):
             pred = MessagePredicate.yes_or_no(ctx)        
             event = "message"
             try:
-                await ctx.bot.wait_for(event, check=pred, timeout=30)
+                await ctx.bot.wait_for(event, check=pred, timeout=60)
             except asyncio.TimeoutError:
                 with contextlib.suppress(discord.NotFound):
                     await query.delete()
@@ -312,16 +324,13 @@ class Awo(commands.Cog):
                 await ctx.send(f'{ctx.author.mention} welcome to Wolf Pack. {ctx.prefix}awo')  
                 return         
         member = ctx.author  
-        if self.payout_list is None:
-            self.payout_list[member.id] = 0
         run = await self.config.runner()
         if run == 0:
             await self.config.runner.set(member.id)
-        if self.alive == 0:
-            self.alive = ctx.author.id    
+        if runn == 0:
             await self.config.alive.set(ctx.author.id)
   
-        ##print('in_list1 ' + str(self.member_dict))
+        
             #this is a url
         if member.id in list(self.member_dict.keys()):
             if self.member_dict[member.id]['link'] is None or self.member_dict[member.id]['link'] == "":
@@ -331,53 +340,57 @@ class Awo(commands.Cog):
         else:
             self.member_dict[member.id] = {'link': "", 'history': None}
             user_pic =self.piclist[self.picind % len(self.piclist)]
-            self.picind += 1                                        #they will have to have the wolfpack role to have an entry in self.member_dict    
+            self.picind += 1                 
+        #print('in_list1 ' + str(self.member_dict))
+        #print(user_pic)                       #they will have to have the wolfpack role to have an entry in self.member_dict    
         numm = len(self.payout_list) + 1
-        ##print(numm)                          
+        #print(numm)                          
         num = "0"
-        ##print(num)
+        #print(num)
         if member.id not in list(self.payout_list.keys()):            
             self.payout_list.update({member.id:0})
             self.streak_start = datetime.datetime.now()
             num = await self.emoji_num(numm)
-            print(num,numm)
+            print(self.payout_list)
             await ctx.send(user_pic)
             await ctx.send(f'AWOOOOOOOOOoooooOOOOOOOOOOOOOOOOOOO ' + str(num))  
             
         else:
-            
+            print('else ' + str(self.payout_list))
             await ctx.send(user_pic)
             await ctx.send(f'AWOOOOOOOOOoooooOOOOOOOOOOOOOOOOOOO ' + str(int(num)))  
             return
         #for when I call cmduser
         alive = await self.config.alive()
         runner = await self.config.runner()
-        ##print(alive)
+        print(alive)
         if alive is None or alive == 0:
             alive = member.id
-        while(self.alive != 0 ):
-            ##print('self.alive ' + str(self.alive))            
+        while(alive != 0 ):
+            print('self.alive ' + str(self.alive))            
             if member.id == runner:
-                ##print('member.is = runner ' + str(runner))
+                print('member.is = runner ' + str(runner))
                 while(alive != 0):
-                    if member.id == alive:
+                    
                         ##print(str(datetime.datetime.now() - self.streak_start))
-                        if datetime.datetime.now() - self.streak_start > datetime.timedelta(seconds =30):                        
-                            await ctx.send('The awo streak has ended. :wolf:')
-                            if self.high_Streak < len(list(self.payout_list.keys())):
-                                self.high_Streak = len(list(self.payout_list.keys()))
-                                await self.config.entries.hiscore.set(self.high_Streak)                           
-                                await ctx.send(f':wolf: NEW HIGH SCORE {str(self.high_Streak)} :wolf:')
-                            self.alive = 0
-                            await self.config.alive.set(0)
-                            await self.config.runner.set(0)
-                            await self.payout(ctx)                            
-                            break    
-                        await asyncio.sleep(1)
-                    else:
-                        return               
+                    if datetime.datetime.now() - self.streak_start > datetime.timedelta(seconds =30):                        
+                        await ctx.send('The awo streak has ended. :wolf:')
+                        if self.high_Streak < len(list(self.payout_list.keys())):
+                            self.high_Streak = len(list(self.payout_list.keys()))
+                            await self.config.hiscore.set(self.high_Streak)                           
+                            await ctx.send(f':wolf: NEW HIGH SCORE {str(self.high_Streak)} :wolf:')
+                        alive = 0
+                        await self.config.alive.set(0)
+                        await self.config.runner.set(0)
+                        await self.payout(ctx)                            
+                        break    
+                    await asyncio.sleep(1)
+                    alive = await self.config.alive()       
                 await asyncio.sleep(1)
+                print('alive')
+                alive = await self.config.alive()
             else:
+                print('return3')
                 return
 
                                                                                   

@@ -21,25 +21,24 @@ class Rainbow(commands.Cog):
         self.bot = bot
 
         #these to the roles you have setup in the server
-        self.roles = {'red' :1059593340032659456,
-            'orange':1059593689816645713,
-            'yellow':1059593669843357737,
-            'green':1059593811505987734,
-            'blue':1059594036035465276,
-            'indigo':1059594131640418324,
-            'violet':1059594418367250564,
-            'pink': 1061330463609860166,
-            'pinker':1061512886616334346,
-            'invisible':1041909802508496947,
-            'random':1061777626286526555}
-        self.random = True
+        self.roles = {'red' :1085989948236251219,
+            'redorange': 1085990443889733663,
+            'orange':1085990177018740767,
+            'orange/yellow': 1085990796970430484,
+            'yellow':1085990282056716359,
+            'yellow/green':1085991058791485521,
+            'green':1085990799394738277,
+            'green/blue': 1085990803123486810,
+            'blue':1085990805686202480,
+            'blurple':1085990808089530438,
+            'indigo':1085990810094424184,
+            'violet':1085991897945870356,
+            'pink': 1085992135288946728,
+            'pinker':1085992190305640499}
+
         
         self.userlist = {716806759687258133: 'red'}
         self.current = [716806759687258133]
-        default_member= {716806759687258133: {
-                                            "theme": "rainbow",
-                                            "color": "red",
-                                            "random":True}}
                                         
                         
         self.config = Config.get_conf(self,  15975365421)
@@ -116,22 +115,17 @@ class Rainbow(commands.Cog):
     async def on_message(self, message):
         if self.current is None:
             return
-        if self.random:
-            roles = []
-            roles.count()
-            if message.author.roles.count(self.roles['random'])
-        role = None
-        mem = message.guild.get_member(message.author.id)
-        if message.author.id in self.current:
-            for r in message.author.roles:
-                for f in self.roles.values():
-                    
-                    if r.id == f:
-                        role = r
-                        print(str(r) + ' ------------------')
-                        break
-                if role is not None:
-                    break                           
+
+
+        mem = message.author
+        if mem.id in self.current:
+            for f in self.roles.values():               
+                
+                if f in mem.roles:
+                    role = r
+                    print(str(r) + ' ------------------')
+                    break
+                 
                 
             clist = list(self.roles.keys())
             for i in range(len(clist)):
@@ -141,12 +135,12 @@ class Rainbow(commands.Cog):
                         for f in self.roles.values():
                             await mem.add_roles(message.guild.get_role(f), reason=f"rainbow fag shit")
                         self.userlist.update({message.author.id: 'red'})
-                        self.config.
+
                         print('c[0] ' + clist[0])
                         break
                     else:
                         if role is not None:
-                            await mem.remove_roles(message.guild.get_role(self.roles[self.userlist[message.author.id]]))
+                            await mem.remove_roles(r)
                             colo = clist[i+1]
                             self.userlist.update({message.author.id: colo})
                             print('c[i+1] ' + clist[i+1])

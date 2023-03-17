@@ -19,6 +19,7 @@ class Geetlog(commands.Cog):
         self.config.register_global(entries=[], handled_string_creator=False)
         self.mirroring = False       
         self.channel =  1084278179331575808     
+        self.member_moves = {}
 
 
     async def _initialize(self):
@@ -27,9 +28,6 @@ class Geetlog(commands.Cog):
         async for entry in self.guild.audit_logs(limit=20):
             self.audit_log.append(entry)
         
-
-
-    
 
     def pfp(self, mem: discord.Member):
         user = mem
@@ -45,12 +43,13 @@ class Geetlog(commands.Cog):
     async def pull(self, ctx: commands.Context, member: discord.Member):
         blacklist = ctx.guild.get_role(1037631864841711666) #blacklist
         vcver = ctx.guild.get_role(1071733269382574150)
-        ##print(blacklist) 
-        ##print(vcver) #vc verified
+        print(blacklist) 
+        print(vcver) #vc verified
         if vcver in member.roles: #this assigns the BLACKLIST role to members                       
             await member.remove_roles(vcver) #this removes the VC verified role (channel overrides)
             await member.add_roles(blacklist, reason=f"Blacklist")
-            await member.move_to(ctx.guild.get_channel(1041194556701560862))# - shadowboob || 1049924751805648936 whats happening
+            self.member_moves[member.id] = member.voice.channel.id
+            await member.move_to(ctx.guild.get_channel(1049924751805648936))# - shadowboob || 1049924751805648936 whats happening
         
         #this is the pull command 
         #add release command
@@ -64,9 +63,9 @@ class Geetlog(commands.Cog):
             await member.remove_roles(blacklist)
             await member.add_roles(vcver, reason=f"VC Verified") 
             await member.add_roles(ctx.guild.get_role(1071733269382574150))#vc verified
-        
-
-
+            
+            await member.move_to(ctx.guild.get_channel(self.member_moves[member.id]))
+            self.member_moves[member.id] = None
 
 
     def past_tense(self, stri=""):
@@ -197,7 +196,7 @@ class Geetlog(commands.Cog):
 
             if self.audit_log[-1] != entry:
                 ##print(f'{entry.user} did {entry.action} to {entry.target}')
-                if entry.action is discord.AuditLogAction.member_move and before.channel != after.channel and entry is not None:
+                if entry.action is discord.AuditLogAction.member_move:
                     ##print('voice ' + str(entry))
                     self.audit_log.append(entry)
                     mes = "Move"
