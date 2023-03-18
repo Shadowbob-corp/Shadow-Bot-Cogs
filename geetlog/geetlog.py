@@ -12,7 +12,7 @@ class Geetlog(commands.Cog):
     def __init__(self, bot: Red):
         self.bot = bot
         self.types = {0: "Mute", 1:"Kick", 2: "Ban", 3: "Move", 4: "Deafen", 5: "Timeout", 6: "Move"}
-        self.guild = self.bot.guilds[0]
+        self.guild = None
         self.audit_log = []
         self._init_task = self.bot.loop.create_task(self._initialize())
         self.config = Config.get_conf(self, 4444556221)
@@ -21,9 +21,13 @@ class Geetlog(commands.Cog):
         self.channel =  1084278179331575808     
         self.member_moves = {}
 
+    
 
     async def _initialize(self):
+        
         """ Should only ever be a task """
+        await self.bot.wait_until_red_ready()
+        self.guild = self.bot.guilds[0]
         #self.audit_log = await self.config.entries()
         async for entry in self.guild.audit_logs(limit=20):
             self.audit_log.append(entry)
@@ -92,13 +96,7 @@ class Geetlog(commands.Cog):
         if stri.lower() == "move":
             return "Moved"
         
- 
 
-    
-
-
-    def hasvalue(value=""):
-        return value != ""
 
     def timeout_len(self, inpt: datetime.timedelta):
         ##print('input = ' + str(inpt))
@@ -176,6 +174,8 @@ class Geetlog(commands.Cog):
                 after_time = after_date[1]
                 after_date = after_date[0]
                 a = {'year': after_date[1:5], "month": after_date[6:8], "day": after_date[9:11], 'hour':  after_time[:2], 'minute': after_time[3:5], 'second':after_time[6:8]}
+                if type(a['year']) is not int or type(a['hour']) is not int:
+                    return
                 aftr = datetime.datetime(year=int(after_date[1:5]), month=int(after_date[6:8]), day=int(after_date[9:11]), hour=int(after_time[:2]), minute=int(after_time[3:5]), second=int(after_time[6:8]))
                 bfre = datetime.datetime(year=int(before_date[1:5]), month=int(before_date[6:8]), day=int(before_date[9:11]), hour=int(before_time[:2]), minute=int(before_time[3:5]), second=int(before_time[6:8]))
                 #print(aftr)
