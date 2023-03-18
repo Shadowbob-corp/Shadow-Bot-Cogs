@@ -5,7 +5,7 @@ from redbot.core.bot import Red
 from redbot.core import commands, bank, checks, Config
 from redbot.core.utils.predicates import MessagePredicate
 from redbot.core.utils import AsyncIter
-
+import contextlib
 import datetime
 
 
@@ -174,7 +174,7 @@ class Awo(commands.Cog):
 
         msg = []
         dont_pay = []
-
+        time = None
         print('lalal')
         print(self.payout_list)
         
@@ -187,10 +187,10 @@ class Awo(commands.Cog):
                     return
                 num = random.randrange(1000,3000)
                 print('num = ' + str(num))            
-                             
+                self.betlist[i] = 0
                  
                 self.currency = await bank.get_currency_name(ctx.guild)
-                time = None
+
           
 
                 if self.member_dict[i]['history'] is not None and self.member_dict[i]['history'] != "":
@@ -300,15 +300,18 @@ class Awo(commands.Cog):
         
 
     @commands.command()
-    #@commands.cooldown(1, 27, commands.BucketType.member)
+    @commands.cooldown(1, 27, commands.BucketType.member)
     async def awo(self, ctx: commands.Context):
         sis_owner = await self.bot.is_owner(ctx.author)
         runn = await self.config.alive()
         #print(runn)
-
+        member = ctx.author  
         wolfp = ctx.guild.get_role(1048830223107506258)
         user_pic = self.piclist[self.picind % len(self.piclist)]
-        if wolfp is None:
+        wolf = None
+        if wolfp in member.roles:
+            wolf = wolfp
+        if wolf is None:
             await ctx.send(f'You ain\'t pack, wanna join?!\n :wolf: Type yes to join :wolf:')
             pred = MessagePredicate.yes_or_no(ctx)        
             event = "message"
@@ -323,7 +326,7 @@ class Awo(commands.Cog):
                 await mem.add_roles(ctx.guild.get_role(1048830223107506258), reason=f"Welcome to Wolf Pack. >awo")
                 await ctx.send(f'{ctx.author.mention} welcome to Wolf Pack. {ctx.prefix}awo')  
                 return         
-        member = ctx.author  
+       
         run = await self.config.runner()
         if run == 0:
             await self.config.runner.set(member.id)
@@ -335,6 +338,7 @@ class Awo(commands.Cog):
         if member.id in list(self.member_dict.keys()):
             if self.member_dict[member.id]['link'] is None or self.member_dict[member.id]['link'] == "":
                 user_pic =self.piclist[self.picind % len(self.piclist)]
+                self.picind += 1
             else:
                 user_pic = self.member_dict[member.id]['link']
         else:
@@ -347,18 +351,24 @@ class Awo(commands.Cog):
         #print(numm)                          
         num = "0"
         #print(num)
-        if member.id not in list(self.payout_list.keys()):            
+        if member.id not in list(self.payout_list.keys()):
+
             self.payout_list.update({member.id:0})
             self.streak_start = datetime.datetime.now()
             num = await self.emoji_num(numm)
             print(self.payout_list)
             await ctx.send(user_pic)
-            await ctx.send(f'AWOOOOOOOOOoooooOOOOOOOOOOOOOOOOOOO ' + str(num))  
-            
+            if member.id == await self.config.runner():
+                await ctx.send(f'AWOOOOOOOOOoooooOOOOOOOOOOOOOOOOOOO  {str(num)} \n{wolfp.mention}')
+            else:
+                await ctx.send(f'AWOOOOOOOOOoooooOOOOOOOOOOOOOOOOOOO ' + str(num))
+              
+            self.picind += 1
         else:
             print('else ' + str(self.payout_list))
             await ctx.send(user_pic)
             await ctx.send(f'AWOOOOOOOOOoooooOOOOOOOOOOOOOOOOOOO ' + str(int(num)))  
+            self.picind += 1
             return
         #for when I call cmduser
         alive = await self.config.alive()
