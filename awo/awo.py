@@ -29,7 +29,7 @@ class Awo(commands.Cog):
         #store variables
         self.publicp = False
         self.listen_for = []
-        self.piclist = ['https://s.abcnews.com/images/Technology/GTY_howling_wolf_tk_130829_16x9_992.jpg', 'https://media.tenor.com/32biYrZHe74AAAAC/wolf-howl.gif']#default pics
+        self.piclist = []#default pics
         self.channel = None #channel object so I can access it for functions later
         self.member_dict = {}#{716806759687258133: {'link': 'https://www.permaculturewomen.com/wp-content/uploads/2020/11/image-107.jpeg', 'history': []}} #initialize it with 1 to prevent errors and so I dont have to keep adding myself to test
         self.picind = 0
@@ -38,7 +38,7 @@ class Awo(commands.Cog):
 
         #awo high score and betting vars
         self.betlist = {}
-
+        self.history = {}
         self.payout_list = {}
         self.alive = 0
         self.streak_start = None
@@ -66,8 +66,10 @@ class Awo(commands.Cog):
         #print('init')
         await self.bot.wait_until_red_ready()
         pl = await self.config.public()
-        self.piclist.extend(pl)
-
+        self.piclist = pl
+        if self.piclist is None:
+            self.piclist = ['https://s.abcnews.com/images/Technology/GTY_howling_wolf_tk_130829_16x9_992.jpg', 'https://media.tenor.com/32biYrZHe74AAAAC/wolf-howl.gif']#default pics
+        self.channel = None #channel object so I can access it for functions later
         self.alive = await self.config.alive()
         #print(self.piclist)
         self.high_Streak = await self.config.hiscore()
@@ -87,6 +89,7 @@ class Awo(commands.Cog):
 
                 print(history['entries'])
                 print(history['history'])
+                self.history = history['history']
                 self.member_dict.update({link:{'link':history['entries']['link'], 'history': history['history']}})
                 #print(self.member_dict)
             
@@ -188,50 +191,33 @@ class Awo(commands.Cog):
                 print('num = ' + str(num))            
                 self.betlist[i] = self.payout_list[i]
                 self.currency = await bank.get_currency_name(ctx.guild)
-                if self.member_dict[i]['history'] is not None and self.member_dict[i]['history'] != "":
-                    time = self.member_dict[i]['history']  
-                    if datetime.datetime.now() - self.translate_history(time) < datetime.timedelta(hours=1):    
-                        print('dont pay - ' + str(datetime.datetime.now() - self.translate_history(time)))
-                        self.betlist[i] = 0                    
-                        dont_pay.append(i)
-                        print(dont_pay)
-                        continue
-                    else:
-                        print('history VVVVVVVVVV '+str(self.member_dict[i]['history']))
-                        self.betlist[i] = num
-                                    
-                        print('history is ' + str(datetime.datetime.now() - self.translate_history(time) ))
-                        time = datetime.datetime.now()
-                        self.member_dict[i]['history'] = time
-                        self.betlist[i] = num
-                        await self.config.member(ctx.guild.get_member(i)).history.set(str(time))
-                        print('no history ---------- ' + str(time)) 
+                               
+                self.payout_list[i] = num
+                self.betlist[i] = num                                    
+                time = datetime.datetime.now()
+                print('time - ' + str(self.betlist[i]))
+ 
+
+                await self.config.member(ctx.guild.get_member(i)).history.set(str(time))
+                print('no history ---------- ' + str(time)) 
                     
                      
             print(self.betlist)
             lst = list(self.betlist.keys())
-            for b in range(len(lst) - 1):
+            for b in range(len(lst)):
                 print('b' + str(b))
-                if b == len(lst) - 1:
-                    self.betlist[lst[b]] += self.betlist[lst[b+1]]
-                    break
-                for d in range(b+1,len(lst)):
+                for d in range(0,b):
                     str('d ' + str(d))
-                    self.betlist[lst[b]] += self.betlist[lst[d]]
+                    self.betlist[lst[d]] += self.betlist[lst[b]]
             #print(self.betlist)             
             await ctx.send(f'If you wanna gamble your earnings type .betawo <multiplier>, you have 30 secs, bet as much as you want')
             self.gamble = True            
             await asyncio.sleep(30)            
             for m in list(self.payout_list.keys()):
-                if m in dont_pay:
-                    msg.append(str(ctx.guild.get_member(m).mention) + ' can get paid again at ' + str(self.translate_history( time )+ datetime.timedelta(hours=1)) + '.\n')
-                    continue
-                else:
-                    print(f'{ctx.guild.get_member(m).mention} got {str(self.betlist[m])} {self.currency}\n')
-                    msg.append(f'{ctx.guild.get_member(m).mention} got {str(self.betlist[m])} {self.currency}\n')
+                print(f'{ctx.guild.get_member(m).mention} got {str(self.betlist[m])} {self.currency}\n')
+                msg.append(f'{ctx.guild.get_member(m).mention} got {str(self.betlist[m])} {self.currency}\n')
             for f in list(self.betlist.keys()):
-                if m not in dont_pay:
-                    await bank.deposit_credits(ctx.guild.get_member(f), self.betlist[f])                    
+                await bank.deposit_credits(ctx.guild.get_member(f), self.betlist[f])                    
             mes = ""
             for m in msg:
                 mes += m
@@ -289,7 +275,7 @@ class Awo(commands.Cog):
         return mem is None or mem == ''
 
     @commands.command()
-    @commands.cooldown(1, 27, commands.BucketType.member)
+    @commands.cooldown(1, 3599, commands.BucketType.member)
     async def awo(self, ctx: commands.Context):
         sis_owner = await self.bot.is_owner(ctx.author)
         runn = await self.config.alive()
