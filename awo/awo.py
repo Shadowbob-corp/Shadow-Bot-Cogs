@@ -7,7 +7,7 @@ from redbot.core.utils.predicates import MessagePredicate
 from redbot.core.utils import AsyncIter
 import contextlib
 import datetime
-import query
+
 
 author = "Jay_"
 version = "2.1.0"
@@ -186,12 +186,13 @@ class Awo(commands.Cog):
                     return
                 num = random.randrange(1000,3000)
                 print('num = ' + str(num))            
-                self.betlist[i] = 0
+                self.betlist[i] = self.payout_list[i]
                 self.currency = await bank.get_currency_name(ctx.guild)
                 if self.member_dict[i]['history'] is not None and self.member_dict[i]['history'] != "":
                     time = self.member_dict[i]['history']  
                     if datetime.datetime.now() - self.translate_history(time) < datetime.timedelta(hours=1):    
-                        print('dont pay - ' + str(datetime.datetime.now() - self.translate_history(time)))                    
+                        print('dont pay - ' + str(datetime.datetime.now() - self.translate_history(time)))
+                        self.betlist[i] = 0                    
                         dont_pay.append(i)
                         print(dont_pay)
                         continue
@@ -207,7 +208,7 @@ class Awo(commands.Cog):
                         print('no history ---------- ' + str(time)) 
                     
                      
-
+            print(self.betlist)
             lst = list(self.betlist.keys())
             for b in range(len(lst) - 1):
                 print('b' + str(b))
@@ -281,7 +282,11 @@ class Awo(commands.Cog):
                 self.payout_list.update({ctx.author.id: 0})
                 self.betlist.update({ctx.author.id: 0})
                 await ctx.send(f'{ctx.author.mention} lost it all, sorry yo.')
-        
+    
+
+    def has_pic(self, member: discord.Member):
+        mem = self.member_dict[member.id]['link']
+        return mem is None or mem == ''
 
     @commands.command()
     @commands.cooldown(1, 27, commands.BucketType.member)
@@ -339,12 +344,16 @@ class Awo(commands.Cog):
             self.streak_start = datetime.datetime.now()
             num = await self.emoji_num(numm)
             print(self.payout_list)
-            await ctx.send(user_pic)
-            if member.id == await self.config.runner():
-                await ctx.send(f'AWOOOOOOOOOoooooOOOOOOOOOOOOOOOOOOO  {str(num)} \n{wolfp.mention}')
+            if self.has_pic(member):
+                await ctx.send(user_pic)
+                if member.id == await self.config.runner():
+                    await ctx.send(f'AWOOOOOOOOOoooooOOOOOOOOOOOOOOOOOOO  {str(num)} \n{wolfp.mention}')
+                else:
+                    await ctx.send(f'AWOOOOOOOOOoooooOOOOOOOOOOOOOOOOOOO  {str(num)}')
             else:
+                await ctx.send(self.piclist[self.picind % len(self.piclist)])
                 await ctx.send(f'AWOOOOOOOOOoooooOOOOOOOOOOOOOOOOOOO ' + str(num))              
-            self.picind += 1
+                self.picind += 1
         else:
             print('else ' + str(self.payout_list))
             await ctx.send(user_pic)
@@ -354,6 +363,7 @@ class Awo(commands.Cog):
         #for when I call cmduser
         alive = await self.config.alive()
         runner = await self.config.runner()
+        self.runner = runner
         print(alive)
         if alive is None or alive == 0:
             alive = member.id

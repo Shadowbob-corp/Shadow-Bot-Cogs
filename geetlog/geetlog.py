@@ -132,12 +132,12 @@ class Geetlog(commands.Cog):
                 if entry.action is discord.AuditLogAction.ban:
                     self.audit_log.append(entry)
                     mes = "Ban"
-                    await self.post_to_logchannel(entry.user, entry.target.name, entry.reason, mes)
+                    await self.post_to_logchannel(entry.user, entry.targets, entry.reason, mes)
                     return
                 elif entry.action is discord.AuditLogAction.kick:
                     self.audit_log.append(entry)
                     mes = "Kick"
-                    await self.post_to_logchannel(entry.user, entry.target.name, entry.reason, mes)
+                    await self.post_to_logchannel(entry.user, entry.target, entry.reason, mes)
                     return
                 msg = str(entry.changes)
                 if msg.find('roles') > -1:
