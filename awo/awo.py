@@ -10,7 +10,7 @@ import datetime
 
 
 author = "Jay_"
-version = "2.1.0"
+version = "2.1.1"
 #prod
 class Awo(commands.Cog):
     '''Custom Wolf Pack cog made by Jay_ for Blackout.
@@ -68,7 +68,9 @@ class Awo(commands.Cog):
         pl = await self.config.public()
         self.piclist = pl
         if self.piclist is None:
-            self.piclist = ['https://s.abcnews.com/images/Technology/GTY_howling_wolf_tk_130829_16x9_992.jpg', 'https://media.tenor.com/32biYrZHe74AAAAC/wolf-howl.gif']#default pics
+            self.piclist = ['https://i.etsystatic.com/6992381/r/il/29de6b/1224835976/il_1140xN.1224835976_p9i2.jpg', 
+                                      'https://www.publicdomainpictures.net/pictures/250000/velka/wolf-howling-moon-silhouette.jpg',
+                                      'https://cdn.discordapp.com/attachments/1030564322352562257/1087100789098553444/EBE4D843-B10E-46A4-AE1E-52B291717E05.jpg']#default pics
         self.channel = None #channel object so I can access it for functions later
         self.alive = await self.config.alive()
         #print(self.piclist)
@@ -97,7 +99,9 @@ class Awo(commands.Cog):
     @checks.is_owner()
     async def resetpic(self, ctx):
         self.piclist.clear()
-        await self.config.public.set(['https://i.etsystatic.com/6992381/r/il/29de6b/1224835976/il_1140xN.1224835976_p9i2.jpg', 'https://www.publicdomainpictures.net/pictures/250000/velka/wolf-howling-moon-silhouette.jpg'])
+        await self.config.public.set(['https://i.etsystatic.com/6992381/r/il/29de6b/1224835976/il_1140xN.1224835976_p9i2.jpg', 
+                                      'https://www.publicdomainpictures.net/pictures/250000/velka/wolf-howling-moon-silhouette.jpg',
+                                      'https://cdn.discordapp.com/attachments/1030564322352562257/1087100789098553444/EBE4D843-B10E-46A4-AE1E-52B291717E05.jpg'])
 
 
     @commands.command()
@@ -238,6 +242,7 @@ class Awo(commands.Cog):
 
         else:
             await ctx.send(f'{ctx.author.mention} is a lone wolf right now :\'(')
+            ctx.command.reset_cooldown(ctx)
             self.gamble = False
             self.payout_list = {}
             self.betlist = {}
