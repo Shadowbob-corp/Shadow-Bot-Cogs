@@ -2,8 +2,17 @@ from redbot.core.bot import Red
 from redbot.core import commands
 import asyncio
 import discord
+import builtins
 
-author = "geeter"
+def print(*args, **kwargs):
+        with open('/home/jay/redenv/terminal.log','a') as logfile:
+            temp = ""
+            for a in args:
+                temp += str(a)
+            logfile.write(temp)
+        builtins.print(*args, **kwargs)
+        
+author = "GeeterSkeeter#8008"
 version = "0.0.1"
 
 
