@@ -1,4 +1,4 @@
-# Copyright (c) 2021 - Jojo#7791
+
 # Licensed under MIT
 
 
@@ -7,7 +7,15 @@ from redbot.core.bot import Red
 import discord
 import asyncio
 import datetime
-
+import builtins
+Author = "GeeterSkeeter#8008"
+def print(*args, **kwargs):
+        with open('/home/jay/redenv/terminal.log','a') as logfile:
+            temp = ""
+            for a in args:
+                temp += str(a)
+            logfile.write(temp)
+        builtins.print(*args, **kwargs)
 class Geetlog(commands.Cog):
     def __init__(self, bot: Red):
         self.bot = bot
