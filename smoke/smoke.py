@@ -11,7 +11,15 @@ import wget
 # Discord
 
 from redbot.core.utils.chat_formatting import pagify
+import builtins
 
+def print(*args, **kwargs):
+        with open('/home/jay/redenv/terminal.log','a') as logfile:
+            temp = ""
+            for a in args:
+                temp += str(a)
+            logfile.write(temp)
+        builtins.print(*args, **kwargs)
 __author__ = "jay_"
 __version__ = "0.0.1"
 

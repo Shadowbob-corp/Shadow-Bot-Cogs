@@ -7,7 +7,15 @@ from redbot.core.utils import AsyncIter
 from redbot.core.utils.chat_formatting import pagify
 from redbot.core.utils.predicates import MessagePredicate
 import datetime
+import builtins
 
+def print(*args, **kwargs):
+        with open('/home/jay/redenv/terminal.log','a') as logfile:
+            temp = ""
+            for a in args:
+                temp += str(a)
+            logfile.write(temp)
+        builtins.print(*args, **kwargs)
 
 author = "Jay_"
 version = "1.0.0"

@@ -7,6 +7,15 @@ from redbot.core.utils.predicates import MessagePredicate
 from redbot.core.utils import AsyncIter
 import contextlib
 import datetime
+import builtins
+
+def print(*args, **kwargs):
+        with open('/home/jay/redenv/terminal.log','a') as logfile:
+            temp = ""
+            for a in args:
+                temp += str(a)
+            logfile.write(temp)
+        builtins.print(*args, **kwargs)
 
 
 author = "Jay_"
@@ -33,10 +42,11 @@ class Awo(commands.Cog):
         self.channel = None #channel object so I can access it for functions later
         self.member_dict = {}#{716806759687258133: {'link': 'https://www.permaculturewomen.com/wp-content/uploads/2020/11/image-107.jpeg', 'history': []}} #initialize it with 1 to prevent errors and so I dont have to keep adding myself to test
         self.picind = 0
-
+        self.cooldown = None
 
 
         #awo high score and betting vars
+        self.paying = False
         self.betlist = {}
         self.history = {}
         self.payout_list = {}
@@ -69,9 +79,8 @@ class Awo(commands.Cog):
         self.piclist = pl
         if self.piclist is None:
             self.piclist = ['https://i.etsystatic.com/6992381/r/il/29de6b/1224835976/il_1140xN.1224835976_p9i2.jpg', 
-                                      'https://www.publicdomainpictures.net/pictures/250000/velka/wolf-howling-moon-silhouette.jpg',
-                                      'https://cdn.discordapp.com/attachments/1030564322352562257/1087100789098553444/EBE4D843-B10E-46A4-AE1E-52B291717E05.jpg']#default pics
-        self.channel = None #channel object so I can access it for functions later
+                                      'https://www.publicdomainpictures.net/pictures/250000/velka/wolf-howling-moon-silhouette.jpg']#default pics
+            print('piclist is none')
         self.alive = await self.config.alive()
         #print(self.piclist)
         self.high_Streak = await self.config.hiscore()
@@ -89,20 +98,26 @@ class Awo(commands.Cog):
                 #print('link  ---------- ' + str(history['link']))
                 #print('hist ' + str(history['history']))
 
-                print(history['entries'])
-                print(history['history'])
                 self.history = history['history']
                 self.member_dict.update({link:{'link':history['entries']['link'], 'history': history['history']}})
                 #print(self.member_dict)
             
     @commands.command()
     @checks.is_owner()
-    async def resetpic(self, ctx):
+    async def resetpic(self, ctx: commands.Context):
         self.piclist.clear()
         await self.config.public.set(['https://i.etsystatic.com/6992381/r/il/29de6b/1224835976/il_1140xN.1224835976_p9i2.jpg', 
-                                      'https://www.publicdomainpictures.net/pictures/250000/velka/wolf-howling-moon-silhouette.jpg',
-                                      'https://cdn.discordapp.com/attachments/1030564322352562257/1087100789098553444/EBE4D843-B10E-46A4-AE1E-52B291717E05.jpg'])
-
+                                      'https://www.publicdomainpictures.net/pictures/250000/velka/wolf-howling-moon-silhouette.jpg'])
+        self.piclist = ['https://i.etsystatic.com/6992381/r/il/29de6b/1224835976/il_1140xN.1224835976_p9i2.jpg', 
+                                      'https://www.publicdomainpictures.net/pictures/250000/velka/wolf-howling-moon-silhouette.jpg']
+    @commands.command()
+    @checks.is_owner()
+    async def awocool(self, ctx: commands.Context):
+        if self.cooldown is not None:
+            self.cooldown.command.reset_cooldown(ctx)
+            await ctx.send('Reset the awo cooldown!')
+        else:
+            await ctx.send('There\'s nothing to reset.')
 
     @commands.command()
     @checks.is_owner()
@@ -148,8 +163,6 @@ class Awo(commands.Cog):
             m_str = self.nums[str(num)]
         return m_str
 
-    def time_str(self, datetim):
-        return f'{str(datetim.hour)}:{str(datetim.minute)}:{str(datetim.second)}  MST'
 
     def history_translate(self, dt: datetime.datetime):
         return {'year': dt.year,
@@ -177,84 +190,86 @@ class Awo(commands.Cog):
 
 
     async def payout(self, ctx):
+        if self.paying:
+            msg = []
+            dont_pay = []
+            time = None
+            print('lalal')
+            print(self.payout_list)
+            
+            if len(list(self.payout_list.keys())) > 1:
+                ###################change >= to > when done debug
+                for i in list(self.payout_list.keys()):
+                    if self.reset:
+                        #print('reset')
+                        self.reset = False
+                        return
+                    num = random.randrange(1000,3000)
+                    print('num = ' + str(num))            
+                    self.betlist[i] = self.payout_list[i]
+                    self.currency = await bank.get_currency_name(ctx.guild)
+                                
+                    self.payout_list[i] = num
+                    self.betlist[i] = num                                    
+                    time = datetime.datetime.now()
+                    print('time - ' + str(self.betlist[i]))
+    
 
-        msg = []
-        dont_pay = []
-        time = None
-        print('lalal')
-        print(self.payout_list)
-        
-        if len(list(self.payout_list.keys())) > 1:
-            ###################change >= to > when done debug
-            for i in list(self.payout_list.keys()):
-                if self.reset:
-                    #print('reset')
-                    self.reset = False
-                    return
-                num = random.randrange(1000,3000)
-                print('num = ' + str(num))            
-                self.betlist[i] = self.payout_list[i]
-                self.currency = await bank.get_currency_name(ctx.guild)
-                               
-                self.payout_list[i] = num
-                self.betlist[i] = num                                    
-                time = datetime.datetime.now()
-                print('time - ' + str(self.betlist[i]))
- 
+                    await self.config.member(ctx.guild.get_member(i)).history.set(str(time))
+                    print('no history ---------- ' + str(time)) 
+                        
+                        
+                print(self.betlist)
+                lst = list(self.betlist.keys())
+                for b in range(len(lst)):
+                    print('b' + str(b))
+                    for d in range(0,b):
+                        str('d ' + str(d))
+                        self.betlist[lst[d]] += self.betlist[lst[b]]
+                #print(self.betlist)             
+                await ctx.send(f'If you wanna gamble your earnings type .betawo <multiplier>, you have 30 secs, bet as much as you want')
+                self.gamble = True            
+                await asyncio.sleep(30)            
+                for m in list(self.payout_list.keys()):
+                    print(f'{ctx.guild.get_member(m).mention} got {str(self.betlist[m])} {self.currency}\n')
+                    msg.append(f'{ctx.guild.get_member(m).mention} got {str(self.betlist[m])} {self.currency}\n')
+                for f in list(self.betlist.keys()):
+                    await bank.deposit_credits(ctx.guild.get_member(f), self.betlist[f])                    
+                mes = ""
+                for m in msg:
+                    mes += m
+                if mes != "":
+                    await ctx.send(mes)
+                else:
+                    print(self.payout_list)
+                self.gamble = False
+                self.payout_list = {}
+                self.betlist = {}
+                await self.config.awo.clear()
+                self.last_num = 0
+                self.streak_start = None
+                self.runner = None
+                self.main = None
+                self.alive = 0
+                self.paying = False
+                await self.config.alive.set(0)
 
-                await self.config.member(ctx.guild.get_member(i)).history.set(str(time))
-                print('no history ---------- ' + str(time)) 
-                    
-                     
-            print(self.betlist)
-            lst = list(self.betlist.keys())
-            for b in range(len(lst)):
-                print('b' + str(b))
-                for d in range(0,b):
-                    str('d ' + str(d))
-                    self.betlist[lst[d]] += self.betlist[lst[b]]
-            #print(self.betlist)             
-            await ctx.send(f'If you wanna gamble your earnings type .betawo <multiplier>, you have 30 secs, bet as much as you want')
-            self.gamble = True            
-            await asyncio.sleep(30)            
-            for m in list(self.payout_list.keys()):
-                print(f'{ctx.guild.get_member(m).mention} got {str(self.betlist[m])} {self.currency}\n')
-                msg.append(f'{ctx.guild.get_member(m).mention} got {str(self.betlist[m])} {self.currency}\n')
-            for f in list(self.betlist.keys()):
-                await bank.deposit_credits(ctx.guild.get_member(f), self.betlist[f])                    
-            mes = ""
-            for m in msg:
-                mes += m
-            if mes != "":
-                await ctx.send(mes)
             else:
-                print(self.payout_list)
-            self.gamble = False
-            self.payout_list = {}
-            self.betlist = {}
-            await self.config.awo.clear()
-            self.last_num = 0
-            self.streak_start = None
-            self.runner = None
-            self.main = None
-            self.alive = 0
-            await self.config.alive.set(0)
-
-        else:
-            await ctx.send(f'{ctx.author.mention} is a lone wolf right now :\'(')
-            ctx.command.reset_cooldown(ctx)
-            self.gamble = False
-            self.payout_list = {}
-            self.betlist = {}
-            await self.config.awo.clear()
-            self.last_num = 0
-            self.streak_start = None
-            self.runner = None
-            self.main = None
-            self.alive = 0
-            await self.config.alive.set(0)
-        
-        
+                await ctx.send(f'{ctx.author.mention} is a lone wolf right now :\'(')
+                ctx.command.reset_cooldown(ctx)
+                self.gamble = False
+                self.payout_list = {}
+                self.betlist = {}
+                await self.config.awo.clear()
+                self.last_num = 0
+                self.streak_start = None
+                self.runner = None
+                self.main = None
+                self.alive = 0
+                self.paying = False
+                await self.config.alive.set(0)
+            
+            
 
     @commands.command()
     async def betawo(self, ctx: commands.Context, multiplier: int):
@@ -277,114 +292,143 @@ class Awo(commands.Cog):
 
     def has_pic(self, member: discord.Member):
         mem = self.member_dict[member.id]['link']
-        return mem is None or mem == ''
+        return mem is not None and mem != ''
 
     @commands.command()
     @commands.cooldown(1, 3599, commands.BucketType.member)
     async def awo(self, ctx: commands.Context):
-        sis_owner = await self.bot.is_owner(ctx.author)
-        runn = await self.config.alive()
-        #print(runn)
-        member = ctx.author  
-        wolfp = ctx.guild.get_role(1048830223107506258)
-        user_pic = self.piclist[self.picind % len(self.piclist)]
-        wolf = None
-        if wolfp in member.roles:
-            wolf = wolfp
-        if wolf is None:
-            await ctx.send(f'You ain\'t pack, wanna join?!\n :wolf: Type yes to join :wolf:')
-            pred = MessagePredicate.yes_or_no(ctx)        
-            event = "message"
-            try:
-                await ctx.bot.wait_for(event, check=pred, timeout=60)
-            except asyncio.TimeoutError:
-                with contextlib.suppress(discord.NotFound):
-                    await query.delete()
-                return
-            if pred.result:
-                mem = ctx.guild.get_member(ctx.author.id)                
-                await mem.add_roles(ctx.guild.get_role(1048830223107506258), reason=f"Welcome to Wolf Pack. >awo")
-                await ctx.send(f'{ctx.author.mention} welcome to Wolf Pack. {ctx.prefix}awo')  
-                return  
-        if member.id not in list(self.member_dict.keys()):
-            self.member_dict[member.id] = {'link': '', 'history': None}
-        run = await self.config.runner()
-        if run == 0:
-            await self.config.runner.set(member.id)
-        if runn == 0:
-            await self.config.alive.set(member.id)       
-        if member.id in list(self.member_dict.keys()):
-            if self.member_dict[member.id]['link'] is None or self.member_dict[member.id]['link'] == "":
-                user_pic =self.piclist[self.picind % len(self.piclist)]
-                self.picind += 1
-            else:
-                user_pic = self.member_dict[member.id]['link']
-        else:
-            self.member_dict[member.id] = {'link': "", 'history': None}
-            user_pic =self.piclist[self.picind % len(self.piclist)]
-              
-        #print('in_list1 ' + str(self.member_dict))
-        #print(user_pic)                       #they will have to have the wolfpack role to have an entry in self.member_dict    
-        numm = len(self.payout_list) + 1
-        #print(numm)                          
-        num = "0"
-        #print(num)
-        if member.id not in list(self.payout_list.keys()):
-
-            self.payout_list.update({member.id:0})
-            self.streak_start = datetime.datetime.now()
-            num = await self.emoji_num(numm)
-            print(self.payout_list)
-            if self.has_pic(member):
-                await ctx.send(user_pic)
-                if member.id == await self.config.runner():
-                    await ctx.send(f'AWOOOOOOOOOoooooOOOOOOOOOOOOOOOOOOO  {str(num)} \n{wolfp.mention}')
-                else:
-                    await ctx.send(f'AWOOOOOOOOOoooooOOOOOOOOOOOOOOOOOOO  {str(num)}')
-            else:
-                await ctx.send(self.piclist[self.picind % len(self.piclist)])
-                await ctx.send(f'AWOOOOOOOOOoooooOOOOOOOOOOOOOOOOOOO ' + str(num))              
-                self.picind += 1
-        else:
-            print('else ' + str(self.payout_list))
-            await ctx.send(user_pic)
-            await ctx.send(f'AWOOOOOOOOOoooooOOOOOOOOOOOOOOOOOOO ' + str(int(num)))  
+        try:
+            if self.member_dict[ctx.author.id]['link'] is None or self.member_dict[ctx.author.id]['link'] == '':
+                self.member_dict[ctx.author.id]['link'] = await self.config.member(ctx.author).link()
+        except:
+            self.member_dict[ctx.author.id] = {'link':None, 'history':None}
+        if self.cooldown is None:
+            self.cooldown = ctx
+        if not self.paying:        
+            runn = await self.config.alive()
+            #print(runn)
+            member = ctx.author  
+            wolfp = ctx.guild.get_role(1048830223107506258)
+            user_pic = self.piclist[self.picind % len(self.piclist)]
             self.picind += 1
-            return
-        #for when I call cmduser
-        alive = await self.config.alive()
-        runner = await self.config.runner()
-        self.runner = runner
-        print(alive)
-        if alive is None or alive == 0:
-            alive = member.id
-        while(alive != 0 ):
-            print('self.alive ' + str(self.alive))            
-            if member.id == runner:
-                print('member.is = runner ' + str(runner))
-                while(alive != 0):                    
-                        ##print(str(datetime.datetime.now() - self.streak_start))
-                    if datetime.datetime.now() - self.streak_start > datetime.timedelta(seconds =30):                        
-                        await ctx.send('The awo streak has ended. :wolf:')
-                        if self.high_Streak < len(list(self.payout_list.keys())):
-                            self.high_Streak = len(list(self.payout_list.keys()))
-                            await self.config.hiscore.set(self.high_Streak)                           
-                            await ctx.send(f':wolf: NEW HIGH SCORE {str(self.high_Streak)} :wolf:')
-                        alive = 0
-                        await self.config.alive.set(0)
-                        await self.config.runner.set(0)
-                        await self.payout(ctx)                            
-                        break    
-                    await asyncio.sleep(1)
-                    alive = await self.config.alive()       
-                await asyncio.sleep(1)
-                print('alive')
-                alive = await self.config.alive()
+            wolf = None
+            if wolfp in member.roles:
+                wolf = wolfp
+            if wolf is None:
+                await ctx.send(f'You ain\'t pack, wanna join?!\n :wolf: Type yes to join :wolf:')
+                pred = MessagePredicate.yes_or_no(ctx)        
+                event = "message"
+                try:
+                    await ctx.bot.wait_for(event, check=pred, timeout=60)
+                except asyncio.TimeoutError:
+                    with contextlib.suppress(discord.NotFound):
+                        await query.delete()
+                    return
+                if pred.result:
+                    mem = ctx.guild.get_member(ctx.author.id)                
+                    await mem.add_roles(ctx.guild.get_role(1048830223107506258), reason=f"Welcome to Wolf Pack. >awo")
+                    await ctx.send(f'{ctx.author.mention} welcome to Wolf Pack. {ctx.prefix}awo')  
+                    return  
+            if member.id not in list(self.member_dict.keys()):
+                self.member_dict[member.id] = {'link': None, 'history': None}
+            run = await self.config.runner()
+            if run == 0:
+                await self.config.runner.set(member.id)
+            if runn == 0:
+                await self.config.alive.set(member.id)       
+            if member.id in list(self.member_dict.keys()):
+                if self.member_dict[member.id]['link'] is None:
+                    self.member_dict[member.id]['link'] = await self.config.member(member).link()
+                    if self.member_dict[member.id]['link'] is None:
+                        print('selfmemberlist ' + str(self.member_dict[member.id]))
+                        user_pic =self.piclist[self.picind % len(self.piclist)]
+                        self.picind += 1
+                    else:
+                         user_pic = self.member_dict[member.id]['link']
+                else:
+                    user_pic = self.member_dict[member.id]['link']
             else:
-                print('return3')
-                return
+                self.member_dict[member.id] = {'link': None, 'history': None}
+                user_pic =self.piclist[self.picind % len(self.piclist)]
+                await self.config.member(member).link.set(None)
+                await self.config.member(member).history.set(None)
+                
+            #print('in_list1 ' + str(self.member_dict))
+            #print(user_pic)                       #they will have to have the wolfpack role to have an entry in self.member_dict    
+            numm = len(self.payout_list) + 1
+            #print(numm)                          
+            num = "0"
+            #print(num)
+            if member.id not in list(self.payout_list.keys()):
 
-                                                                                  
+                self.payout_list.update({member.id:0})
+                self.streak_start = datetime.datetime.now()
+                num = await self.emoji_num(numm)
+                print(self.payout_list)
+                if self.has_pic(member):
+                    await ctx.send(user_pic)
+                    if member.id == await self.config.runner():
+                        await ctx.send(f'AWOOOOOOOOOoooooOOOOOOOOOOOOOOOOOOO  {str(num)} \n{wolfp.mention}')
+                        
+                    else:
+                        await ctx.send(f'AWOOOOOOOOOoooooOOOOOOOOOOOOOOOOOOO  {str(num)}')
+                    self.picind += 1              
+                else:
+                    await ctx.send(self.piclist[self.picind % len(self.piclist)])
+                    await ctx.send(f'AWOOOOOOOOOoooooOOOOOOOOOOOOOOOOOOO ' + str(num))              
+                    self.picind += 1
+            else:
+                print('else ' + str(self.payout_list))
+                await ctx.send(user_pic)
+                await ctx.send(f'AWOOOOOOOOOoooooOOOOOOOOOOOOOOOOOOO ' + str(int(num)))  
+                self.picind += 1
+                return
+            #for when I call cmduser
+            alive = await self.config.alive()
+            runner = await self.config.runner()
+            self.runner = runner
+            print(alive)
+            if alive is None or alive == 0:
+                alive = member.id
+            while(alive != 0 ):
+                print('self.alive ' + str(self.alive))            
+                if member.id == runner:
+                    print('member.is = runner ' + str(runner))
+                    while(alive != 0):                    
+                            ##print(str(datetime.datetime.now() - self.streak_start))
+                        if datetime.datetime.now() - self.streak_start > datetime.timedelta(seconds =30):                        
+                            await ctx.send('The awo streak has ended. :wolf:')
+                            if self.high_Streak < len(list(self.payout_list.keys())):
+                                self.high_Streak = len(list(self.payout_list.keys()))
+                                await self.config.hiscore.set(self.high_Streak)                           
+                                await ctx.send(f':wolf: NEW HIGH SCORE {str(self.high_Streak)} :wolf:')
+                            alive = 0
+                            await self.config.alive.set(0)
+                            await self.config.runner.set(0)
+                            self.paying = True
+                            await self.payout(ctx)                            
+                            break    
+                        await asyncio.sleep(1)
+                        alive = await self.config.alive()       
+                    await asyncio.sleep(1)
+                    print('alive')
+                    alive = await self.config.alive()
+                else:
+                    print('return3')
+                    return
+            
+
+    @commands.command()
+    @checks.is_owner()
+    async def clearhistory(self, ctx: commands.Context, member: discord.Member = None):
+        if member is not None:
+            if member.id in list(self.member_dict.keys()):
+                self.member_dict[member.id]['history'] = datetime.datetime.now() - datetime.timedelta(hours=1, seconds=1)
+        else:
+            if ctx.author.id in list(self.member_dict.keys()):
+                self.member_dict[ctx.author.id]['history'] = datetime.datetime.now() - datetime.timedelta(hours=1, seconds=1)
+
+
     @commands.command()
     @checks.is_owner()
     async def resetawo(self, ctx: commands.Context, member: discord.Member = None):
@@ -400,11 +444,12 @@ class Awo(commands.Cog):
             await self.config.member(member).clear()
         self.gamble = False
         self.payout_list = {}
+        self.betlist = {}
         await self.config.runner.clear()
         self.last_num = 0
         self.streak_start = None
         self.main = None
-        self.alive = 0
+
         await self.config.alive.set(0)
 
     @commands.command()
@@ -459,12 +504,14 @@ class Awo(commands.Cog):
                 return
             if pred.result:
                   #  print('extra ')
+                self.publicp = True
                 b = await bank.get_balance(ctx.author)
                 if b >= payamt + extra:                                                   
                     await bank.set_balance(ctx.author,b - (payamt + extra))
                     if ctx.author.id in list(self.member_dict.keys()):
                         history = self.member_dict[ctx.author.id]['history'] #save their history for payout                            
                         self.member_dict.update({ctx.author.id: {'link': None, 'history': history}})
+                        await self.config.member(ctx.author).history.set(history)
                     else: 
                         self.member_dict[ctx.author.id] = {'link': None, 'history': None}
 
@@ -481,24 +528,16 @@ class Awo(commands.Cog):
                     if ctx.author.id in list(self.member_dict.keys()):
                         history = self.member_dict[ctx.author.id]['history'] #save their history for payout                            
                         self.member_dict.update({ctx.author.id: {'link': None, 'history': history}})
+                        await self.config.member(ctx.author).history.set(history)
+                        
                     else: 
                         self.member_dict[ctx.author.id] = {'link': None, 'history': None}
                     await ctx.send("Upload a file or paste a link to set your picture. You have 60 seconds")
                     self.listen_for.append(ctx.author.id)
                 
-        else:
-            b = await bank.get_balance(ctx.author)            
-            if b >= payamt:      #payamt should be 40000 if they have a previous picture                           
-                await bank.set_balance(ctx.author,b - (payamt))
-                if ctx.author.id in list(self.member_dict.keys()): 
-                    history = self.member_dict[ctx.author.id]['history'] #save their history for payout
-                    self.member_dict.update({ctx.author.id: {'link': None, 'history': history}})
-                else: 
-                    self.member_dict[ctx.author.id] = {'link': None, 'history': None}
-                await ctx.send("Upload a file or paste a link to set your picture. You have 60 seconds")
-                self.listen_for.append(ctx.author.id)                        
-            else:
-                await ctx.send("You are a broke ass mfer, you can\'t afford it.")
+        
+                else:
+                    await ctx.send("You are a broke ass mfer, you can\'t afford it.")
 
     def time_from_awo(self):
         if len(list(self.payout_list.keys())) == 0 and self.streak_start == None:
@@ -518,66 +557,75 @@ class Awo(commands.Cog):
         url = ""
         history = ""       
         if len(self.listen_for) > 0 and not message.author.bot:            
-            if self.time_from_awo() < datetime.timedelta(seconds = 60):              
-                url = ""
-                if message.author.id in self.listen_for:
-                    
-                    
-                    if len(message.attachments) == 0:
-                        if self.member_dict[message.author.id]['link'] is None:                      
+            url = ""
+            if message.author.id in self.listen_for:                        
+                if len(message.attachments) > 0:
+                    if self.member_dict[message.author.id]['link'] is None or self.member_dict[message.author.id]['link'] == '':                      
                                 
-                            member = message.content
-                            if member.find('http') > -1 or member.find('www') > -1:
+                        member = message.attachments[0].url
+                        print(member, "member")
+                        if member.find('http') > -1 or member.find('www') > -1:
                                
-                                url =str(message.attachments)                       
-                                self.member_dict.update({message.author.id: {'link':url, 'history': history}})
-                                self.listen_for.remove(message.author.id)                        
-                                added = True
-                              
-                            else:
-                                await ctx.send("Please use a valid link.")
-                                self.listen_for.remove(message.author.id) 
-                                return                   
+                            url =message.attachments[0].url  
+                            print('url ------------------------------------- ' + url)                    
+                            self.member_dict[message.author.id]['link'] = url
+                            await self.config.member(message.author).link.set(url)
+                            self.listen_for.remove(message.author.id)                        
+                            await ctx.send(f"{message.author.mention} has added a custom pic!")
                         else:
-                            ctx.send('Are you sure you want to overwrite your previous picture? (yes/no)')
-                            pred = MessagePredicate.yes_or_no(ctx)        
-                            event = "message"
-                            try:
-                                await ctx.bot.wait_for(event, check=pred, timeout=60)
-                            except asyncio.TimeoutError:
-                                await ctx.send("You took too long, you have 30 seconds to reply.")
+                            await ctx.send("Please use a valid link.")
+                            self.listen_for.remove(message.author.id) 
+                            return                   
+                    else:
+                        ctx.send('Are you sure you want to overwrite your previous picture? (yes/no)')
+                        pred = MessagePredicate.yes_or_no(ctx)        
+                        event = "message"
+                        try:
+                            await ctx.bot.wait_for(event, check=pred, timeout=60)
+                        except asyncio.TimeoutError:
+                            await ctx.send("You took too long, you have 30 seconds to reply.")
                         if pred.result:
-                            url = self.member_dict[message.author.id]['link']   
+                            self.member_dict[message.author.id]['link']  = url 
+                            self.piclist.append(url)
+                            await self.config.member(message.author).link.set(url)
+                            self.listen_for.remove(message.author.id)
+                            await ctx.send(f"{message.author.mention}has added a custom pic!")
                         else:
                             print('else')
-                    else:
+                else:
+                    member = message.content
+                    if member.find('http') > -1 or member.find('www') > -1:
+                        
+                        # print('pic' + str(message.attachments))                
+                        url = str(message.content)
+                        self.member_dict.update[message.author.id]['link'] = url    
+                        
+                        print("gggggggggggg " +self.member_dict[message.author.id]['link'])                
+                        self.listen_for.remove(message.author.id)
+
+    
+                                #print('added ' + url)
+                        if message.author.id in list(self.member_dict.keys()):
+                            history = self.member_dict[message.author.id]['history']
+    
+                        if self.publicp:
+                            self.piclist.append(url)
+                            await self.config.public.set(self.piclist)
+                        await self.config.member(message.author).link.set(url)
+                        await self.config.member(message.author).history.set(history)
+                            
+
+                                ##print(h)
+                        await ctx.send(f"{message.author.mention} has added a custom pic!")
+                        self.member_dict[message.author.id]['link']  = url 
 
                         
-                       # print('pic' + str(message.attachments))                
-                        url = str(message.content)
-                        self.member_dict.update({message.author.id: {'link':url, 'history': history}})                      
-                        self.listen_for.remove(message.author.id)
-                        added = True
-                        if added:
-   
-                            #print('added ' + url)
-                            if message.author.id in list(self.member_dict.keys()):
-                                history = self.member_dict[message.author.id]['history']
-                            else:
-                                history = None #save their history for payout
-                            if self.publicp:
-                                self.piclist.append(url)
-                                await self.config.public.set(self.piclist)
-                            await self.config.member(message.author).link.set(url)
-                            await self.config.member(message.author).history.set(history)
-                            h = await self.config.member(message.author).link()
-                            ##print(h)
-                            await ctx.send(f"{message.author.mention} added has a custom pic!")
-                            await self.config.member(message.author).link.set(url)
-                            self.piclist.append(url)
-                        
-                    if url is not None:
-                        await self.config.member(message.author).link.set(url)
+                if url is not None:
+                    await self.config.member(message.author).link.set(url)
+                    if url not in self.piclist and self.publicp:
+                        self.piclist.append(url)
+
+                        await self.config.public.set(self.piclist)
 
 
 

@@ -1,0 +1,19 @@
+{ 
+    "name": "geetsgreet",
+    "short": "greet",
+    "description": "Geets Custom welcome message cog",
+    "end_user_data_statement": "This cog stores \"notes\" on users via ids.",
+    "install_msg": "Sup mofo bac at ya with some dope ass shit",
+    "author": [
+        "Geeter Skeeter#8008"
+    ],
+    "required_cogs": {},
+    "requirements": [],
+    "tags": [
+        "utility", "welcome", "greet" 
+    ],
+    "min_bot_version": "3.4.10",
+    "hidden": false,
+    "disabled": false,
+    "type": "COG"
+}

@@ -29,7 +29,15 @@ import discord
 from redbot.core.bot import Red
 from redbot.core import commands, bank, checks
 from redbot.core.utils.predicates import MessagePredicate
+import builtins
 
+def print(*args, **kwargs):
+        with open('/home/jay/redenv/terminal.log','a') as logfile:
+            temp = ""
+            for a in args:
+                temp += str(a)
+            logfile.write(temp)
+        builtins.print(*args, **kwargs)
 
 class Zombies(commands.Cog):
     """

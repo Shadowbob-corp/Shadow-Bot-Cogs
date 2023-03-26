@@ -1,0 +1,19 @@
+{ 
+    "name": "LEVI",
+    "short": "levi",
+    "description": "Geets Custom welcome message cog",
+    "end_user_data_statement": "This cog stores \"notes\" on users via ids.",
+    "install_msg": "Levis custon command",
+    "author": [
+        "Geeter Skeeter#8008"
+    ],
+    "required_cogs": {},
+    "requirements": [],
+    "tags": [
+        "utility", "Levis", "levi" 
+    ],
+    "min_bot_version": "3.4.10",
+    "hidden": false,
+    "disabled": false,
+    "type": "COG"
+}

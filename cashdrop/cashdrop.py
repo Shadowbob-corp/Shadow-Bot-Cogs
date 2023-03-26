@@ -29,7 +29,7 @@ class Cashdrop(commands.Cog):
             credits_min=50,
         )
         self.cache = {}
-        self.server_list = [1030564322352562257,1045582374777393192]
+        self.server_list = [1030564322352562257, 1045582374777393192]
         asyncio.create_task(self.init_loop())
 
     def random_calc(self):
@@ -37,7 +37,7 @@ class Cashdrop(commands.Cog):
             "+": operator.add,
             "-": operator.sub,
             "*": operator.mul,
-            #'/':operator.truediv
+            # '/':operator.truediv
         }
         num1 = random.randint(0, 12)
         num2 = random.randint(1, 10)
@@ -52,13 +52,15 @@ class Cashdrop(commands.Cog):
         #     await asyncio.sleep(60)
         # await self.save()
 
-
     def cog_unload(self):
-        self.bg_config_loop.cancel()
-        asyncio.create_task(self.save_triggers())
+        self.init_loop.cancel()
+        # Removed the following line: asyncio.create_task(self.save_triggers())
 
     async def generate_cache(self):
         self.cache = await self.config.all_guilds()
+
+    # Rest of the code remains the same
+
 
     @commands.Cog.listener()
     async def on_message(self, message):
