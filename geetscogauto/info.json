@@ -1,0 +1,19 @@
+{ 
+    "name": "geetscogauto",
+    "short": "cogit",
+    "description": "So Im fucking tired of copy and pasting the format for all of these custom cogs. Its annoying so I semi automated this shit",
+    "end_user_data_statement": "",
+    "install_msg": "Cog it and move on wiht ease",
+    "author": [
+        "Geeter Skeeter#8008"
+    ],
+    "required_cogs": {},
+    "requirements": [],
+    "tags": [
+        "utility", "customcog", "cogit" 
+    ],
+    "min_bot_version": "3.4.10",
+    "hidden": false,
+    "disabled": false,
+    "type": "COG"
+}

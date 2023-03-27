@@ -15,7 +15,7 @@ def print(*args, **kwargs):
             for a in args:
                 temp += str(a)
             logfile.write(temp)
-        builtins.print(*args, **kwargs)
+            builtins.print(temp)
 
 
 author = "Jay_"
@@ -78,8 +78,13 @@ class Awo(commands.Cog):
         pl = await self.config.public()
         self.piclist = pl
         if self.piclist is None:
-            self.piclist = ['https://i.etsystatic.com/6992381/r/il/29de6b/1224835976/il_1140xN.1224835976_p9i2.jpg', 
+            pb = await self.config.public()
+            if pb is None:
+                self.piclist = ['https://i.etsystatic.com/6992381/r/il/29de6b/1224835976/il_1140xN.1224835976_p9i2.jpg', 
                                       'https://www.publicdomainpictures.net/pictures/250000/velka/wolf-howling-moon-silhouette.jpg']#default pics
+                await self.config.public.set(self.piclist)
+            else:
+                self.piclist = pb
             print('piclist is none')
         self.alive = await self.config.alive()
         #print(self.piclist)
@@ -112,7 +117,8 @@ class Awo(commands.Cog):
                                       'https://www.publicdomainpictures.net/pictures/250000/velka/wolf-howling-moon-silhouette.jpg']
     @commands.command()
     @checks.is_owner()
-    async def awocool(self, ctx: commands.Context):
+    async def awocool(self, ctx: commands.Context, member:discord.Member = None):
+
         if self.cooldown is not None:
             self.cooldown.command.reset_cooldown(ctx)
             await ctx.send('Reset the awo cooldown!')
@@ -145,13 +151,13 @@ class Awo(commands.Cog):
         print(temp)
         year = temp[0]
         month = temp[1]
-        temp = temp[2].split('T',1)
+        temp = temp[2].split(' ',1)
         day = temp[0]
         temp = temp[1].split(':', 2)
         hour = temp[0]
         minute = temp[1]
         second = temp[2].split('.')[0]
-        return str(datetime.datetime(int(year),int(month),int(day),int(hour),int(minute),int(second)))
+        return datetime.datetime(int(year),int(month),int(day),int(hour),int(minute),int(second))
 
    
     async def emoji_num(self, num):
@@ -162,31 +168,6 @@ class Awo(commands.Cog):
         else:
             m_str = self.nums[str(num)]
         return m_str
-
-
-    def history_translate(self, dt: datetime.datetime):
-        return {'year': dt.year,
-                'month': dt.month,
-                'day': dt.day,
-                'hour': dt.hour,
-                'minute': dt.minute,
-                'second': dt.second}
-    
-    def translate_history(self, input):
-        
-        print(input)
-        temp = str(input).split('-',2)
-        print(temp)
-        year = temp[0]
-        month = temp[1]
-        temp = temp[2].split(' ',1)
-        day = temp[0]
-        temp = temp[1].split(':', 2)
-        hour = temp[0]
-        minute = temp[1]
-        second = temp[2].split('.')[0]
-        print('-------------------' + str(datetime.datetime(int(year),int(month),int(day),int(hour),int(minute),int(second))))
-        return datetime.datetime(int(year),int(month),int(day),int(hour),int(minute),int(second))
 
 
     async def payout(self, ctx):
@@ -230,11 +211,19 @@ class Awo(commands.Cog):
                 await ctx.send(f'If you wanna gamble your earnings type .betawo <multiplier>, you have 30 secs, bet as much as you want')
                 self.gamble = True            
                 await asyncio.sleep(30)            
-                for m in list(self.payout_list.keys()):
-                    print(f'{ctx.guild.get_member(m).mention} got {str(self.betlist[m])} {self.currency}\n')
-                    msg.append(f'{ctx.guild.get_member(m).mention} got {str(self.betlist[m])} {self.currency}\n')
+                dontpay = []
                 for f in list(self.betlist.keys()):
-                    await bank.deposit_credits(ctx.guild.get_member(f), self.betlist[f])                    
+                    history = await self.config.member(ctx.guild.get_member(f)).history()
+                    if datetime.datetime.now() - self.format_time(history) > datetime.timedelta(hours = 1):
+                        await bank.deposit_credits(ctx.guild.get_member(f), self.betlist[f])     
+                        await self.config.member(ctx.guild.get_member(f)).history.set(str(datetime.datetime.now()))             
+                    else:
+                        dontpay.append(f)
+                for m in list(self.payout_list.keys()):
+                    if m in dontpay:
+                        msg.append(f'{ctx.guild.get_member(m).mention} has already gotten paid this hour\n')
+                    else:                        
+                        msg.append(f'{ctx.guild.get_member(m).mention} got {str(self.betlist[m])} {self.currency}\n')          
                 mes = ""
                 for m in msg:
                     mes += m
@@ -295,7 +284,7 @@ class Awo(commands.Cog):
         return mem is not None and mem != ''
 
     @commands.command()
-    @commands.cooldown(1, 3599, commands.BucketType.member)
+    @commands.cooldown(1, 30, commands.BucketType.member)
     async def awo(self, ctx: commands.Context):
         try:
             if self.member_dict[ctx.author.id]['link'] is None or self.member_dict[ctx.author.id]['link'] == '':
@@ -378,11 +367,7 @@ class Awo(commands.Cog):
                     await ctx.send(f'AWOOOOOOOOOoooooOOOOOOOOOOOOOOOOOOO ' + str(num))              
                     self.picind += 1
             else:
-                print('else ' + str(self.payout_list))
-                await ctx.send(user_pic)
-                await ctx.send(f'AWOOOOOOOOOoooooOOOOOOOOOOOOOOOOOOO ' + str(int(num)))  
-                self.picind += 1
-                return
+                await ctx.send('We heard you the first time')
             #for when I call cmduser
             alive = await self.config.alive()
             runner = await self.config.runner()
@@ -462,6 +447,10 @@ class Awo(commands.Cog):
         await ctx.send(self.alive)
         t = await self.config.runner()
         await ctx.send(f'runner = {str(t)} ')
+        p = await self.config.public()
+        await ctx.send(p)
+        mem = await self.config.all_members()
+        await ctx.send(mem)
 
 
 

@@ -1,9 +1,10 @@
 
 import os
-
+from redbot.core.bot import Red
 from redbot.core import commands, checks
 import asyncio
 import builtins
+import math
 
 def print(*args, **kwargs):
         with open('/home/jay/redenv/terminal.log','a') as logfile:
@@ -11,8 +12,8 @@ def print(*args, **kwargs):
             for a in args:
                 temp += str(a)
             logfile.write(temp)
-            logfile.close()
-        builtins.print(*args, **kwargs)
+            builtins.print(temp)
+
 
 class ConsoleStream(commands.Cog):
     '''This cog streams the output of the console to a specified channel (set self.channel to the id)
@@ -28,8 +29,28 @@ class ConsoleStream(commands.Cog):
         self.file_path = '/home/jay/redenv/terminal.log' #file path to the log file, this needs to match up with the file path in the bash script
         self.channel = 1084000224491602010 #channel id of the channel you want the output streamed to
         self.length = 0
-
+     
+    #this function splits a string into 4000 char blocks to be sent to discord 
+    def split_string(self,string):
+        ret = []
+        if len(string) < 3999:
+            return [string]
+        l = len(string)/3999
+        for n in range(math.ceil(l)):
+            if (n+1) * 1999 > len(string):
+                ret.append(string[(n)*1999:])
+            else:
+                ret.append(string[n*1999:(n+1)*3999])
+        return ret            
     
+    def difference(self, string1, string2):
+        one = set(string1)
+        two = set(string2)
+        diff = one.symmetric_difference(two)
+        output = ""
+        for o in diff:
+            output += o
+        return output
 
     @commands.command()
     @checks.is_owner()
@@ -38,41 +59,53 @@ class ConsoleStream(commands.Cog):
         last_utc = 0 #last time file was modified
         end_str = [] #list for keeping track of the lines added
         chan = ctx.guild.get_channel(self.channel)
+        current_text = ""
         with open(self.file_path, 'r') as f:  
             last_utc = os.path.getmtime(self.file_path)
-            for r in f.readlines():
+            current_text = f.readlines()
+            print(current_text)
+            for r in current_text:
+                print(r)
                 if not self.enabled:
                     return
                 if r not in end_str: #to avoid duplicate entries
                     try:
-                        if r is None:
-                            end_str.append('-\n')                           
-
-                        else:
                             end_str.append(r)    
-
+                
                     except:
 
-                        end_str.append('-\n')    
+                        end_str.append('\n') 
+                          
+            p_string = []
+            ind = 0
+            print('len = ' + str(len(end_str)))
             print(end_str)
-            for fj in range(len(end_str) -  num,len(end_str)):
-                if len(end_str[fj]) > 2000:
-                    while(len(end_str[fj]) > 2000):
-                        await ctx.send(end_str[fj][:1999])
-                        end_str[fj] = end_str[fj][2000:]
-                await ctx.send(end_str[fj])
-                await asyncio.sleep(1)
-            while(self.enabled):
-                if os.path.getmtime(self.file_path) != last_utc: #checks for the file being modified
-                    for fi in f.readlines():
-                        if fi not in end_str:
-                            if not self.enabled: #exit on self.enabled = False
-                                return      
-                            #await chan.send(fi) 
-                        await asyncio.sleep(1)            
-                             
-                last_utc = os.path.getmtime(self.file_path) #update modified time
-                await asyncio.sleep(1)
+            if end_str is not None:
+                for fj in range(len(end_str) -  num,len(end_str)-1):
+                    p_string= self.split_string(end_str[fj])
+                    
+                    for p in p_string:
+                        await chan.send(p)
+                        await asyncio.sleep(1)
+                while(self.enabled):
+                    if os.path.getmtime(self.file_path) != last_utc: #checks for the file being modified
+                        dif = self.difference(current_text, f.read())
+                        current_text = f.read()
+                        print(dif)
+                        fi = dif
+                        sstr = ""
+                        
+                        if not self.enabled: #exit on self.enabled = False
+                            return      
+                        for f in self.split_string(dif):
+                            await chan.send(f)
+                            await asyncio.sleep(1)
+                        await chan.send(self.split_string(fi))
+        
+                    await asyncio.sleep(1)            
+                            
+                    last_utc = os.path.getmtime(self.file_path) #update modified time
+
             f.close()       
             
 

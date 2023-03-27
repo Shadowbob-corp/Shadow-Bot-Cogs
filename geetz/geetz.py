@@ -47,7 +47,9 @@ class Geetz(commands.Cog):
         await message.add_reaction("<a:letwigglet:1047789468708524082>")
         await message.add_reaction("<a:finalfire:1089110692952539166>")
         self.reacted_messages.append(message)
+
 ####################################################################
+    
     @commands.command()
     async def dot(self, ctx, *, text: str = None):
         if text:
