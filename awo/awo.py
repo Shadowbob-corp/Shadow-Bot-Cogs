@@ -83,8 +83,7 @@ class Awo(commands.Cog):
                 self.piclist = ['https://i.etsystatic.com/6992381/r/il/29de6b/1224835976/il_1140xN.1224835976_p9i2.jpg', 
                                       'https://www.publicdomainpictures.net/pictures/250000/velka/wolf-howling-moon-silhouette.jpg']#default pics
                 await self.config.public.set(self.piclist)
-            else:
-                self.piclist = pb
+            
             print('piclist is none')
         self.alive = await self.config.alive()
         #print(self.piclist)
@@ -192,11 +191,7 @@ class Awo(commands.Cog):
                                 
                     self.payout_list[i] = num
                     self.betlist[i] = num                                    
-                    time = datetime.datetime.now()
-                    print('time - ' + str(self.betlist[i]))
-    
-
-                    await self.config.member(ctx.guild.get_member(i)).history.set(str(time))
+                    
                     print('no history ---------- ' + str(time)) 
                         
                         
@@ -279,7 +274,7 @@ class Awo(commands.Cog):
                 await ctx.send(f'{ctx.author.mention} lost it all, sorry yo.')
     
 
-    def has_pic(self, member: discord.Member):
+    def has_pic(self, member: discord.Member): 
         mem = self.member_dict[member.id]['link']
         return mem is not None and mem != ''
 

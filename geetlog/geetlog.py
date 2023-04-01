@@ -1,4 +1,4 @@
-ConvertFrom-Csv
+
 # Licensed under MIT
 
 
@@ -9,6 +9,8 @@ import asyncio
 import datetime
 import builtins
 Author = "GeeterSkeeter#8008"
+Version = "1.0.0"
+
 def print(*args, **kwargs):
         with open('/home/jay/redenv/terminal.log','a') as logfile:
             temp = ""
@@ -28,7 +30,8 @@ class Geetlog(commands.Cog):
         self.mirroring = False       
         self.channel =  1084278179331575808     
         self.member_moves = {}
-
+        self.last_message = None
+        self.last_post_time = None
     
 
     async def _initialize(self):
@@ -217,6 +220,7 @@ class Geetlog(commands.Cog):
                     else:
                         mes = "Unmute"
                     ##print(mes)
+                    print('-----------------------------' + unmute)
                     await self.post_to_logchannel(entry.user,  member, entry.reason, mes)
                     return
                 elif after.deaf != before.deaf:                   
@@ -231,13 +235,20 @@ class Geetlog(commands.Cog):
                     await self.post_to_logchannel(entry.user,  member, entry.reason, mes)
                     return
 
-    
+    def compare_last_message(self, embed):
+        if embed == self.last_message:
+            return True
+            f
 
 
-    async def post_to_logchannel( self,staff:discord.Member, member: discord.Member, reason = "Geetlog", type="", time=None, b_channel=None, a_channel=None):
-        embed = None
+    async def post_to_logchannel(self, staff: discord.Member, member: discord.Member, reason="Geetlog", type="", time=None, b_channel=None, a_channel=None):
+        now = datetime.datetime.now()
+        if self.last_post_time is None:
+            self.last_post_time = datetime.datetime.now()- datetime.timedelta(seconds=2)
+        
         ###print('type = ' + type)
         #await self.config.entries.set(list(self.audit_log))
+        
         if type == "Timeout":
             embed = discord.Embed(title="Member Timedout", description=f"{member.mention} was timed out by {staff.mention} for {str(time)}", color=0xFF6666)
         elif type == "Removed Timeout":
@@ -251,7 +262,7 @@ class Geetlog(commands.Cog):
             #print(f"{member.name} was unmuted by {staff.name}")
             embed = discord.Embed(title="Member Unmuted", description=f"{member.mention} was unmuted by {staff.mention}", color=0xFF0000)
         elif type == 'Deafen':
-            embed = discord.Embed(title="Member Deafened", description=f"{member.mention} was deafened by {staff.mention}", color=0xFF0000)
+            embed = discord.Embed(title="Member Deafened", description=f"ff{member.mention} was deafened by {staff.mention}", color=0xFF0000)
         elif type == 'Undeafen':
             embed = discord.Embed(title="Member Undeafened", description=f"{member.mention} was undeafened by {staff.mention}", color=0xFF0000)
         elif type == 'Kick':
@@ -265,9 +276,18 @@ class Geetlog(commands.Cog):
         else:
             embed = discord.Embed(title="Member " + str(self.past_tense(type)), description=f"{member.mention} was timed out by {staff.mention} for {str(time)}", color=0xFF6666)
         ##print(embed)
+        
+        print('embed')
         embed.set_thumbnail(url=member.avatar_url)
-        embed.set_author(name=staff.nick, icon_url=staff.avatar_url)        
+        embed.set_author(name=staff.nick, icon_url=staff.avatar_url)         
         embed.add_field(name='Reason', value=reason)
+        time_since_last = now - self.last_post_time
+        if self.last_message == embed or time_since_last < datetime.timedelta(seconds = 1):
+            self.last_message = embed
+            self.last_post_time = now
+            return
+        
         await staff.guild.get_channel(self.channel).send(embed=embed)
-            
+        self.last_message = embed
+        self.last_post_time = now
        
