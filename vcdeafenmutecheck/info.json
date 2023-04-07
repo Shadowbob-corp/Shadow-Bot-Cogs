@@ -1,0 +1,13 @@
+{
+  "author": "GeeterSkeeter#8008",
+  "version": "1.0.0",
+  "name": "VCDeafenMuteCheck",
+  "short": "Check deafened and muted users in voice channels",
+  "description": "This cog checks for users who have been deafened and muted in a voice channel for 1 hour. The bot will send them a DM asking if they're still online, and if they don't reply with 'yes' within 10 minutes, they will be moved to the AFK voice channel.",
+  "install_msg": "VCDeafenMuteCheck has been successfully installed.",
+  "tags": ["voice", "mute", "deafen", "afk"],
+  "min_bot_version": "3.4.0",
+  "required_cogs": {},
+  "requirements": [],
+  "end_user_data_statement": "This cog does not store any end user data."
+}
